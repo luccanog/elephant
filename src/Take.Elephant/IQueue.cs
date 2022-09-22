@@ -39,6 +39,18 @@ namespace Take.Elephant
         Task EnqueueAsync(T item, CancellationToken cancellationToken = default);
     }
 
+    public interface IPartitionSenderQueue<T>
+    {
+        /// <summary>
+        /// Enqueues an item to a specific partition through the Key value.
+        /// </summary>
+        /// <param name="item"></param>
+        /// <param name="key"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        Task EnqueueAsync(T item, string key, CancellationToken cancellationToken = default);
+    }
+
     public interface IBatchSenderQueue<T>
     {
         /// <summary>

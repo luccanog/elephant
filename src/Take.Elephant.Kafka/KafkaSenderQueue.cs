@@ -6,9 +6,9 @@ using System.Threading.Tasks;
 
 namespace Take.Elephant.Kafka
 {
-    public class KafkaSenderQueue<T> : ISenderQueue<T>, IDisposable
+    public class KafkaSenderQueue<T> : ISenderQueue<T>, IPartitionSenderQueue<T>, IDisposable
     {
-        private readonly IEventStreamPublisher<Null, string> _producer;
+        private readonly IEventStreamPublisher<object, string> _producer;
         private readonly ISerializer<T> _serializer;
 
         public KafkaSenderQueue(string bootstrapServers, string topic, ISerializer<T> serializer)
@@ -37,17 +37,17 @@ namespace Take.Elephant.Kafka
         {
             Topic = topic;
             _serializer = serializer;
-            _producer = new KafkaEventStreamPublisher<Null, string>(producerConfig, topic, kafkaSerializer ?? new StringSerializer());
+            _producer = new KafkaEventStreamPublisher<object, string>(producerConfig, topic, kafkaSerializer ?? new StringSerializer());
         }
 
         public KafkaSenderQueue(
-            IProducer<Null, string> producer,
+            IProducer<object, string> producer,
             ISerializer<T> serializer,
             string topic)
         {
-            _serializer = serializer;
             Topic = topic;
-            _producer = new KafkaEventStreamPublisher<Null, string>(producer, topic);
+            _serializer = serializer;
+            _producer = new KafkaEventStreamPublisher<object, string>(producer, topic);
         }
 
         public string Topic { get; }
@@ -56,6 +56,12 @@ namespace Take.Elephant.Kafka
         {
             var stringItem = _serializer.Serialize(item);
             return _producer.PublishAsync(null, stringItem, cancellationToken);
+        }
+
+        public virtual Task EnqueueAsync(T item, string key, CancellationToken cancellationToken = default)
+        {
+            var stringItem = _serializer.Serialize(item);
+            return _producer.PublishAsync(key, stringItem, cancellationToken);
         }
 
         public void Dispose() => (_producer as IDisposable)?.Dispose();
