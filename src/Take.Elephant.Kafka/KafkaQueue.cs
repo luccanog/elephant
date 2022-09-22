@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Take.Elephant.Kafka
 {
-    public class KafkaQueue<T> : IBlockingQueue<T>, ICloseable, IDisposable
+    public class KafkaQueue<T> : IBlockingQueue<T>, IPartitionSenderQueue<T>, ICloseable, IDisposable
     {
         private readonly KafkaSenderQueue<T> _senderQueue;
         private readonly KafkaReceiverQueue<T> _receiverQueue;
@@ -25,6 +25,11 @@ namespace Take.Elephant.Kafka
         public virtual Task EnqueueAsync(T item, CancellationToken cancellationToken = default)
         {
             return _senderQueue.EnqueueAsync(item, cancellationToken);
+        }
+
+        public virtual Task EnqueueAsync(T item, string key, CancellationToken cancellationToken = default)
+        {
+            return _senderQueue.EnqueueAsync(item, key, cancellationToken);
         }
 
         public virtual Task<T> DequeueAsync(CancellationToken cancellationToken)
